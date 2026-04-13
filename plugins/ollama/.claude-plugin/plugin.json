@@ -1,0 +1,8 @@
+{
+  "name": "ollama",
+  "version": "0.1.0",
+  "description": "Integrate OLLAMA as your local AI agent for code review, generation, debugging, and refactoring within Claude Code.",
+  "author": {
+    "name": "Gabriel Duarte Viera"
+  }
+}
