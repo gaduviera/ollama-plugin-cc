@@ -20,7 +20,7 @@ To install the plugin locally in Claude Code:
 2.  Open the command palette (Ctrl/Cmd + Shift + P).
 3.  Type and select `Extensions: Install Plugin`.
 4.  Choose `Install from VSIX/File`.
-5.  Navigate to the directory where you cloned this repository (e.g., `C:\Users\YourUser\Documents\Claude\Projects\IAs_plugin_cc\ollama-plugin-cc`).
+5.  Navigate to the directory where you cloned this repository.
 6.  Select the `plugins/ollama` directory.
 
 Alternatively, you can use the CLI command:
@@ -117,8 +117,8 @@ Encountering issues? Here are common problems and their solutions:
 -   **Reset Configuration**: To reset the plugin's configuration, delete the `~/.ollama-plugin-cc/` directory and re-run `/ollama:setup`.
 
 ---
-## 🤝 Base de Diseño
-This plugin's architecture and design patterns are inspired by the proven **qwen-plugin-cc**, adapted to leverage OLLAMA's REST API. Key elements adopted include a robust job management system, state persistence, and a clear command structure.
+## 🤝 Design Inspiration
+This plugin's architecture and design patterns are inspired by the proven **openai-codex-plugin-cc**, adapted to leverage OLLAMA's REST API. Key elements adopted include a robust job management system, state persistence, and a clear command structure.
 
 ## 📝 License
 Apache-2.0
