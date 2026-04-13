@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Claude Code local settings (personal permissions, not project config)
+.claude/
+
+# Development & planning docs (internal only, not for distribution)
+AGENTS.md
+CODEX.md
+CONTEXT.md
+INDEX.md
+OLLAMA_PLUGIN_PLANNING.md
+docs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Temp files
+tmp_*.txt
+*.tmp
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Build output
+dist/
+build/
