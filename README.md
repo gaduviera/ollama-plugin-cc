@@ -14,20 +14,18 @@ To use the OLLAMA Plugin for Claude Code, ensure you have:
 - **OLLAMA**: Installed and running. You can download OLLAMA from [ollama.com](https://ollama.com/). Make sure the OLLAMA server is active by running `ollama serve` in your terminal.
 
 ## ⚙️ Installation
-To install the plugin locally in Claude Code:
 
-1.  Open Claude Code.
-2.  Open the command palette (Ctrl/Cmd + Shift + P).
-3.  Type and select `Extensions: Install Plugin`.
-4.  Choose `Install from VSIX/File`.
-5.  Navigate to the directory where you cloned this repository.
-6.  Select the `plugins/ollama` directory.
+Install directly from Claude Code in two commands:
 
-Alternatively, you can use the CLI command:
 ```bash
-/plugin install file:///path/to/ollama-plugin-cc/plugins/ollama
+# 1. Add this marketplace (one-time setup)
+/plugin marketplace add gaduviera/ollama-plugin-cc
+
+# 2. Install the plugin
+/plugin install ollama@ollama-plugin-cc
 ```
-*(Replace `/path/to/` with the actual path where you cloned this repository)*
+
+That's it — no cloning or local paths needed.
 
 ## 🚀 Quick Start
 Get up and running with OLLAMA in Claude Code in three simple steps:

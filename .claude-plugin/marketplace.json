@@ -1,0 +1,29 @@
+{
+  "name": "ollama-plugin-cc",
+  "owner": {
+    "name": "Gabriel Duarte Viera",
+    "email": "gaduviera@gmail.com"
+  },
+  "metadata": {
+    "description": "OLLAMA integration plugin for Claude Code — run local AI models for code review, tasks, and more.",
+    "version": "0.1.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "ollama",
+      "source": "./plugins/ollama",
+      "description": "Integrate OLLAMA as your local AI agent for code review, generation, debugging, and refactoring within Claude Code.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Gabriel Duarte Viera"
+      },
+      "homepage": "https://github.com/gaduviera/ollama-plugin-cc",
+      "repository": "https://github.com/gaduviera/ollama-plugin-cc",
+      "license": "Apache-2.0",
+      "keywords": ["ollama", "local-ai", "llm", "code-review", "claude-code"],
+      "category": "AI",
+      "tags": ["ollama", "local", "mistral", "deepseek", "llm"]
+    }
+  ]
+}
