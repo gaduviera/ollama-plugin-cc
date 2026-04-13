@@ -25,9 +25,9 @@ To install the plugin locally in Claude Code:
 
 Alternatively, you can use the CLI command:
 ```bash
-/plugin install file:///C:/Users/Gabriel%20Duarte%20Viera/Documents/Claude/Projects/IAs_plugin_cc/ollama-plugin-cc/plugins/ollama
+/plugin install file:///path/to/ollama-plugin-cc/plugins/ollama
 ```
-*(Please replace the absolute path with your actual installation directory)*
+*(Replace `/path/to/` with the actual path where you cloned this repository)*
 
 ## 🚀 Quick Start
 Get up and running with OLLAMA in Claude Code in three simple steps:
@@ -127,4 +127,4 @@ Apache-2.0
 Gabriel Duarte Viera (@gaduviera)
 
 ---
-**Last Updated:** lunes, 13 de abril de 2026
+**Last Updated:** 2026-04-13
