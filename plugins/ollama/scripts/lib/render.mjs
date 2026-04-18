@@ -89,3 +89,44 @@ export function renderRescueReport(report) {
   renderText(`Job ${id} (${prompt}) failed with error:`);
   renderText(error);
 }
+
+const SEVERITY_ORDER = ["critical", "high", "medium", "low"];
+const SEVERITY_ICON = { critical: "🔴", high: "🟠", medium: "🟡", low: "🔵" };
+
+export function renderReviewFindings(reviewOutput, mode = "review") {
+  const { verdict, summary, findings, next_steps } = reviewOutput;
+
+  const modeLabel = mode === "adversarial" ? "Adversarial Review" : "Code Review";
+  const verdictLabel = verdict === "approve" ? "✅ APPROVE" : "⚠️  NEEDS ATTENTION";
+
+  renderText(`\n## ${modeLabel} — ${verdictLabel}\n`);
+  renderText(`**Summary:** ${summary}\n`);
+
+  if (findings.length === 0) {
+    renderText("No findings.");
+  } else {
+    const sorted = [...findings].sort(
+      (a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity)
+    );
+
+    for (const f of sorted) {
+      const icon = SEVERITY_ICON[f.severity] ?? "⚪";
+      renderText(`${icon} **[${f.severity.toUpperCase()}]** ${f.title}`);
+      renderText(`   File: ${f.file}:${f.line_start}-${f.line_end} (confidence: ${(f.confidence * 100).toFixed(0)}%)`);
+      renderText(`   ${f.body}`);
+      renderText(`   → ${f.recommendation}\n`);
+    }
+  }
+
+  if (next_steps.length > 0) {
+    renderText("**Next steps:**");
+    for (const step of next_steps) {
+      renderText(`  - ${step}`);
+    }
+  }
+
+  renderText(
+    "\n---\n⛔ STOP. Do not apply any of the above changes automatically.\n" +
+    "Tell the user which findings were found and ask which ones, if any, they want fixed.\n"
+  );
+}
