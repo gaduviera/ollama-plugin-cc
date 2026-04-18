@@ -1,22 +1,22 @@
 ---
-description: Diagnose OLLAMA connection, configuration, and recent job issues
+description: Delegate a diagnosis or fix task to the active Ollama model (pure forwarder)
+argument-hint: '<task description>'
 allowed-tools: Bash(node:*)
 ---
 
-Run:
+This command is a **pure forwarder**. Your only job is:
+
+1. Use the `ollama-cli-runtime` skill to build the task invocation.
+2. Run exactly ONE command:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/ollama-companion.mjs" rescue --json $ARGUMENTS
+node "${CLAUDE_PLUGIN_ROOT}/scripts/ollama-companion.mjs" task $ARGUMENTS
 ```
 
-Present the diagnostic report clearly:
-- OLLAMA server status (running / not running)
-- Active model
-- OLLAMA endpoint URL
-- Config file location (`~/.ollama-plugin-cc/config.json`)
-- Recent job errors (if any)
+3. Return the stdout of that command unchanged. Do not add analysis, fix issues yourself, or inspect the repository.
 
-Based on the diagnosis, suggest specific remediation steps:
-- If OLLAMA not running → `ollama serve`
-- If no active model → `/ollama:setup`
-- If model missing → `/ollama:run-model <name>`
+**Rules:**
+- Do NOT read files, grep, inspect git history, or do any repo analysis.
+- Do NOT generate a substitute answer if the companion fails — report the failure and stop.
+- Do NOT apply fixes shown in the output without explicit user instruction.
+- If no active model: tell the user to run `/ollama:setup` first.

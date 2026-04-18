@@ -1,5 +1,5 @@
 ---
-description: Structured code review of current changes using the active OLLAMA model
+description: Adversarial code review — finds reasons the change should NOT ship
 argument-hint: '[--target <working-tree|staged|branch>] [--focus <area>]'
 allowed-tools: Bash(node:*)
 ---
@@ -7,10 +7,10 @@ allowed-tools: Bash(node:*)
 Run:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/ollama-companion.mjs" review $ARGUMENTS
+node "${CLAUDE_PLUGIN_ROOT}/scripts/ollama-companion.mjs" adversarial-review $ARGUMENTS
 ```
 
-Returns structured findings (JSON validated against schema) rendered by severity.
+Presents structured findings ordered by severity (critical → high → medium → low).
 After showing results: **STOP. Ask the user which findings, if any, they want fixed. Do NOT auto-apply changes.**
 
 If no active model: tell the user to run `/ollama:setup` first.
