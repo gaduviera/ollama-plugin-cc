@@ -21,6 +21,12 @@ import {
   resolveResultJob,
 } from "./lib/job-control.mjs";
 import { OllamaClient } from "./lib/ollama-client.mjs";
+import { loadPrompt, PromptNotFoundError } from "./lib/prompt-loader.mjs";
+import {
+  buildRepairPrompt,
+  parseReviewOutput,
+  SchemaValidationError,
+} from "./lib/schema-validator.mjs";
 import {
   getActiveModel,
   getOllamaEndpoint,
@@ -59,6 +65,8 @@ import {
 import { resolveWorkspaceRoot } from "./lib/workspace.mjs";
 
 const ROOT_DIR = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
+const PROMPTS_DIR = path.join(ROOT_DIR, "prompts");
+const SCHEMA_PATH = path.join(ROOT_DIR, "schemas", "review-output.schema.json");
 const SCRIPT_PATH = path.join(ROOT_DIR, "scripts", "ollama-companion.mjs");
 const DEFAULT_WAIT_TIMEOUT_MS = 240000;
 const DEFAULT_POLL_INTERVAL_MS = 2000;
@@ -322,6 +330,43 @@ async function executeGenerateRequest(request) {
   };
 }
 
+async function runStructuredReview(model, promptName, vars) {
+  const client = createClient();
+  const schemaRaw = JSON.parse(fs.readFileSync(SCHEMA_PATH, "utf8"));
+  const prompt = loadPrompt(PROMPTS_DIR, promptName, vars);
+  const firstResponse = await client.chat(model, [{ role: "user", content: prompt }], {
+    format: schemaRaw,
+  });
+  try {
+    return parseReviewOutput(firstResponse.content);
+  } catch (firstErr) {
+    if (!(firstErr instanceof SchemaValidationError)) {
+      throw firstErr;
+    }
+    const repairPrompt = buildRepairPrompt(firstResponse.content, firstErr);
+    const secondResponse = await client.chat(
+      model,
+      [
+        { role: "user", content: prompt },
+        { role: "assistant", content: firstResponse.content },
+        { role: "user", content: repairPrompt },
+      ],
+      { format: schemaRaw },
+    );
+    try {
+      return parseReviewOutput(secondResponse.content);
+    } catch {
+      return {
+        error: "schema_violation",
+        verdict: "needs-attention",
+        summary: "Model output did not conform to schema after retry.",
+        findings: [],
+        next_steps: ["Run /ollama:switch to a larger model and retry the review."],
+      };
+    }
+  }
+}
+
 async function executePullModelRequest(request) {
   const client = createClient();
   const result = await client.pullModel(request.modelName);
@@ -350,28 +395,24 @@ async function executeTaskRun(request) {
 
 async function executeReviewRun(request) {
   ensureGitRepository(request.cwd);
-  const target = resolveReviewTarget(request.cwd, {
-    base: request.base,
-    scope: request.scope,
-  });
+  const target = resolveReviewTarget(request.cwd, { base: request.base, scope: request.scope });
   const context = collectReviewContext(request.cwd, target);
-  const prompt = `Review this code and provide detailed feedback:\n\n${context.content}`;
-  const response = await executeGenerateRequest({
-    model: request.model,
-    prompt,
-    write: false,
-    jobClass: "review",
-    jobTitle: "Ollama Review",
+  const reviewOutput = await runStructuredReview(request.model, request.promptName ?? "review", {
+    TARGET_LABEL: target?.label ?? "working-tree",
+    USER_FOCUS: request.focus ?? "",
+    REVIEW_INPUT: context.content,
   });
-
+  const { renderReviewFindings } = await import("./lib/render.mjs");
+  renderReviewFindings(reviewOutput, request.promptName === "adversarial-review" ? "adversarial" : "review");
+  const rendered = JSON.stringify(reviewOutput, null, 2);
   return {
-    ...response,
-    payload: {
-      ...response.payload,
-      target,
-      reviewContent: context.content,
-    },
-    summary: shorten(response.payload.response || `Review for ${target.label}`),
+    exitStatus: 0,
+    payload: { model: request.model, target, reviewContent: context.content, reviewOutput },
+    rendered,
+    summary: reviewOutput.summary,
+    jobTitle: "Ollama Review",
+    jobClass: "review",
+    write: false,
   };
 }
 
@@ -425,7 +466,7 @@ export async function handleSetup(argv) {
 
 export async function handleReview(argv) {
   const { options } = parseCommandInput(argv, {
-    valueOptions: ["scope", "base", "cwd"],
+    valueOptions: ["scope", "base", "cwd", "focus"],
     booleanOptions: ["background", "wait", "json"],
   });
 
@@ -437,7 +478,6 @@ export async function handleReview(argv) {
     scope: options.scope,
   });
   const context = collectReviewContext(cwd, target);
-  const prompt = `Review this code and provide detailed feedback:\n\n${context.content}`;
 
   const job = createCompanionJob({
     prefix: "review",
@@ -455,9 +495,12 @@ export async function handleReview(argv) {
       operation: "review",
       cwd,
       model,
-      prompt,
+      promptName: "review",
       reviewContent: context.content,
       target,
+      base: options.base,
+      scope: options.scope,
+      focus: options.focus ?? "",
       jobId: job.id,
     });
 
@@ -490,17 +533,17 @@ export async function handleReview(argv) {
     return;
   }
 
-  await runForegroundCommand(
-    job,
-    () =>
-      executeReviewRun({
-        cwd,
-        base: options.base,
-        scope: options.scope,
-        model,
-      }),
-    { json: options.json },
-  );
+  const reviewOutput = await runStructuredReview(model, "review", {
+    TARGET_LABEL: target?.label ?? "working-tree",
+    USER_FOCUS: options.focus ?? "",
+    REVIEW_INPUT: context.content,
+  });
+  const { renderReviewFindings } = await import("./lib/render.mjs");
+  renderReviewFindings(reviewOutput, "review");
+  if (options.json) {
+    console.log(JSON.stringify(reviewOutput, null, 2));
+  }
+  return;
 }
 
 export async function handleTask(argv) {
@@ -591,11 +634,16 @@ export async function handleTaskWorker(argv) {
       const request = { ...storedJob.request, onProgress: progress };
       switch (request.operation) {
         case "review":
+          return executeReviewRun({
+            ...request,
+            jobClass: "review",
+            jobTitle: "Ollama Review",
+          });
         case "task":
           return executeGenerateRequest({
             ...request,
-            jobClass: request.operation === "review" ? "review" : "task",
-            jobTitle: request.operation === "review" ? "Ollama Review" : "Ollama Task",
+            jobClass: "task",
+            jobTitle: "Ollama Task",
           });
         case "pull-model":
           return executePullModelRequest(request);
