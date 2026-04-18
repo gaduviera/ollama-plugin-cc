@@ -77,6 +77,7 @@ function printUsage() {
       "Usage:",
       "  node scripts/ollama-companion.mjs setup [--model <name>] [--cwd <path>] [--json]",
       "  node scripts/ollama-companion.mjs review [--scope <auto|working-tree|branch>] [--base <ref>] [--background] [--wait] [--cwd <path>] [--json]",
+      "  node scripts/ollama-companion.mjs adversarial-review [--target <working-tree|staged|branch>] [--focus <text>] [--cwd <path>] [--json]",
       "  node scripts/ollama-companion.mjs task [--background] [--write] [--cwd <path>] [--json] [prompt]",
       "  node scripts/ollama-companion.mjs task-worker --cwd <path> --job-id <id>",
       "  node scripts/ollama-companion.mjs status [job-id] [--all] [--cwd <path>] [--json]",
@@ -546,6 +547,40 @@ export async function handleReview(argv) {
   return;
 }
 
+export async function handleAdversarialReview(argv) {
+  const { options } = parseCommandInput(argv, {
+    valueOptions: ["target", "focus", "cwd"],
+    booleanOptions: ["json"],
+  });
+
+  const cwd = resolveCommandCwd(options);
+  const workspaceRoot = resolveCommandWorkspace(options);
+  const model = await ensureActiveModel();
+
+  ensureGitRepository(cwd);
+  const target = resolveReviewTarget(cwd, {
+    scope: options.target ?? "working-tree",
+  });
+  const context = collectReviewContext(cwd, target);
+
+  const reviewOutput = await runStructuredReview(
+    model,
+    "adversarial-review",
+    {
+      TARGET_LABEL: target?.label ?? "working-tree",
+      USER_FOCUS: options.focus ?? "",
+      REVIEW_INPUT: context.content,
+    }
+  );
+
+  const { renderReviewFindings } = await import("./lib/render.mjs");
+  renderReviewFindings(reviewOutput, "adversarial");
+
+  if (options.json) {
+    console.log(JSON.stringify(reviewOutput, null, 2));
+  }
+}
+
 export async function handleTask(argv) {
   const { options, positionals } = parseCommandInput(argv, {
     valueOptions: ["cwd"],
@@ -902,6 +937,9 @@ export async function main(argv = process.argv.slice(2)) {
       break;
     case "review":
       await handleReview(restArgv);
+      break;
+    case "adversarial-review":
+      await handleAdversarialReview(restArgv);
       break;
     case "task":
       await handleTask(restArgv);
