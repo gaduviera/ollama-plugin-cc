@@ -59,6 +59,43 @@ export class OllamaClient {
     }
   }
 
+  async chat(modelName, messages, options = {}) {
+    const payload = {
+      model: modelName,
+      messages,
+      stream: false,
+      ...options,
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(`${this.endpoint}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        content: data.message?.content ?? '',
+        totalDuration: data.total_duration ?? 0,
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  }
+
   // Listar modelos disponibles
   async listModels() {
     const response = await fetch(`${this.endpoint}/api/tags`);

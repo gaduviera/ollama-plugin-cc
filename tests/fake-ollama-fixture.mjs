@@ -65,6 +65,26 @@ export function startFakeOllama(port = 11435) {
         return;
       }
 
+      if (req.method === 'POST' && req.url === '/api/chat') {
+        const body = await readJsonBody(req);
+        const userMessage = body.messages?.at(-1)?.content ?? '';
+        const isStructured = body.format && typeof body.format === 'object';
+        const response = isStructured
+          ? JSON.stringify({
+              verdict: 'approve',
+              summary: `Mock structured review of: ${userMessage.slice(0, 60)}`,
+              findings: [],
+              next_steps: [],
+            })
+          : `Mock chat response for: ${userMessage.slice(0, 60)}`;
+        sendJson(res, 200, {
+          model: body.model,
+          message: { role: 'assistant', content: response },
+          done: true,
+        });
+        return;
+      }
+
       sendJson(res, 404, { error: "not found" });
     } catch (error) {
       sendJson(res, 500, { error: error.message });
