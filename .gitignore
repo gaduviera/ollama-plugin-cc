@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+package-lock.json
 
 # Environment variables
 .env
@@ -8,6 +9,8 @@ node_modules/
 
 # Claude Code local settings (personal permissions, not project config)
 .claude/
+.clauderc
+~/.ollama-plugin-cc/
 
 # Development & planning docs (internal only, not for distribution)
 AGENTS.md

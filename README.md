@@ -40,7 +40,8 @@ Here is a comprehensive list of all available `/ollama` commands:
 | Command             | Purpose                                                                 | Usage Example                                          |
 | :------------------ | :---------------------------------------------------------------------- | :----------------------------------------------------- |
 | `/ollama:setup`     | Detects your OLLAMA server, lists available models, and sets the active model for tasks. | `/ollama:setup --model mistral`                        |
-| `/ollama:review`    | Initiates a code review of your current changes or selected files using the active OLLAMA model. | `/ollama:review --scope working-tree`                  |
+| `/ollama:review`    | Initiates a code review of your current changes or selected files using the active OLLAMA model. Returns structured JSON output. | `/ollama:review --scope working-tree`                  |
+| `/ollama:adversarial-review` | Performs an adversarial code review, identifying reasons NOT to ship the change using the active model. Returns structured JSON output. | `/ollama:adversarial-review --scope working-tree`      |
 | `/ollama:task`      | Delegates a complex coding task (e.g., refactoring, debugging, feature implementation) to the active OLLAMA model. | `/ollama:task "Refactor the authentication module"`    |
 | `/ollama:result`    | Retrieves and displays the output of a previously run OLLAMA task, identified by its job ID. | `/ollama:result job-abc123`                            |
 | `/ollama:status`    | Shows the current OLLAMA server connection status, the active model, and details of recent jobs. | `/ollama:status` or `/ollama:status job-abc123`        |
@@ -49,6 +50,37 @@ Here is a comprehensive list of all available `/ollama` commands:
 | `/ollama:list-models`| Displays a list of all OLLAMA models detected locally and those available via cloud credentials. | `/ollama:list-models`                                  |
 | `/ollama:run-model` | Downloads a specified model from the Ollama hub directly to your local OLLAMA instance. | `/ollama:run-model llama3`                             |
 | `/ollama:rescue`    | Provides diagnostic information about your OLLAMA setup, connection, and recent job issues, offering troubleshooting tips. | `/ollama:rescue`                                       |
+
+## 🔍 Structured Review Output
+Both `/ollama:review` and `/ollama:adversarial-review` commands return structured JSON output validated against a JSON Schema (draft-07). This ensures consistent, machine-readable results that are easy to parse and integrate into CI/CD pipelines.
+
+### Output Format
+```json
+{
+  "verdict": "APPROVED",
+  "summary": "The changes are well-structured and follow best practices.",
+  "findings": [
+    {
+      "severity": "info",
+      "category": "performance",
+      "message": "Consider caching repeated DOM queries for better performance."
+    }
+  ],
+  "next_steps": [
+    "Address any 'warning' severity findings before merging.",
+    "Consider performance improvements for frequently called functions."
+  ]
+}
+```
+
+### Field Descriptions
+- **verdict**: `APPROVED`, `CONDITIONAL`, or `REJECTED` — the overall recommendation for shipping the change.
+- **summary**: A concise explanation of the review's outcome and main observations.
+- **findings**: An array of issues or observations, each with a severity level (`info`, `warning`, `critical`) and category.
+- **next_steps**: Actionable recommendations for addressing findings and improving the code before merge.
+
+### Schema Validation & Auto-Repair
+The plugin validates all review output against a JSON Schema (draft-07 using ajv ^8.17.1) with automatic repair on validation failure. If the initial output fails validation, the plugin performs one automatic reintry to correct the format before falling back to the user.
 
 ## 🎯 Models Supported
 The OLLAMA Plugin supports a variety of popular models, leveraging both local OLLAMA installations and cloud APIs where applicable:
@@ -125,4 +157,4 @@ Apache-2.0
 Gabriel Duarte Viera (@gaduviera)
 
 ---
-**Last Updated:** 2026-04-13
+**Last Updated:** 2026-04-18
