@@ -1,7 +1,6 @@
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/bb0a47d2-5b9c-483f-8d3a-82dbcfe9b244" />
 # OLLAMA Plugin for Claude Code
 Seamlessly integrate OLLAMA as your local AI agent for code review, generation, debugging, and refactoring within Claude Code.
-
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/bb0a47d2-5b9c-483f-8d3a-82dbcfe9b244" />
 ## 📋 Features
 - **Local-first**: Execute AI tasks entirely on your machine without relying on external cloud APIs (unless explicitly configured).
 - **Multiple Models**: Supports a variety of large language models like GLM, qwen-coder, mistral, mini-max, and deepseek, both local and cloud-based.
